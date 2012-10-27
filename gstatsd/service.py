@@ -96,7 +96,8 @@ class StatsDaemon(object):
     A statsd service implementation in Python + gevent.
     """
 
-    def __init__(self, bindaddr, sinkspecs, interval, percent, debug=0):
+    def __init__(self, bindaddr, sinkspecs, interval, percent, debug=0,
+                 key_prefix=''):
         _, host, port = parse_addr(bindaddr)
         if port is None:
             self.exit(E_BADADDR % bindaddr)
@@ -126,6 +127,7 @@ class StatsDaemon(object):
         self._debug = debug
         self._sock = None
         self._flush_task = None
+        self._key_prefix = key_prefix
 
         self._reset_stats()
 
@@ -191,6 +193,8 @@ class StatsDaemon(object):
         # interpret the packet and update stats
         stats = self._stats
         key = parts[0].translate(KEY_TABLE, KEY_DELETIONS)
+        if self._key_prefix:
+            key = '.'.join([self._key_prefix, key])
         for part in parts[1:]:
             srate = 1.0
             fields = part.split('|')
@@ -217,8 +221,8 @@ class StatsDaemon(object):
                     value = float(value)
                     stats.gauges[key] = value
 
-            else:
-                self.error('Invalid stat type:%s' %stype)
+                else:
+                    self.error('Invalid stat type:%s' %stype)
 
 def main():
     opts = optparse.OptionParser(description=DESCRIPTION, version=__version__,
@@ -231,6 +235,8 @@ def main():
         help="increase verbosity (currently used for debugging)")
     opts.add_option('-f', '--flush', dest='interval', default=INTERVAL,
         help="flush interval, in seconds (default 10)")
+    opts.add_option('-x', '--prefix', dest='key_prefix', default='',
+        help="key prefix added to all keys (default None)")
     opts.add_option('-p', '--percent', dest='percent', default=PERCENT,
         help="percent threshold (default 90)")
     opts.add_option('-D', '--daemonize', dest='daemonize', action='store_true',
@@ -249,7 +255,7 @@ def main():
         daemonize()
 
     sd = StatsDaemon(options.bind_addr, options.sink, options.interval,
-        options.percent, options.verbose)
+                     options.percent, options.verbose, options.key_prefix)
     sd.start()
  
 
