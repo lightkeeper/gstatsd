@@ -86,6 +86,12 @@ class GraphiteSink(Sink):
             buf.write('stats_counts.%s %f %d\n' % (key, val, now))
             num_stats += 1
 
+        # guage stats
+        gauges = stats.gauges
+        for key, val in gauges.iteritems():
+            buf.write('stats.gauges.%s %f %d\n' % (key, val, now))
+            num_stats += 1
+
         buf.write('statsd.numStats %d %d\n' % (num_stats, now))
 
         # TODO: add support for N retries

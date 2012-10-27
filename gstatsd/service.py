@@ -48,6 +48,7 @@ class Stats(object):
     def __init__(self):
         self.timers = defaultdict(list)
         self.counts = defaultdict(float)
+        self.gauges = defaultdict(float)
         self.percent = PERCENT
         self.interval = INTERVAL
 
@@ -207,6 +208,13 @@ class StatsDaemon(object):
                 value = float(value if value else 1) * (1 / srate)
                 stats.counts[key] += value
 
+            # gauge (note: no optional sample rate as per etsy implementation)
+            elif stype == 'g':
+                value = float(value)
+                stats.gauges[key] = value
+
+            else:
+                self.error('Invalid stat type:%s' %stype)
 
 def main():
     opts = optparse.OptionParser(description=DESCRIPTION, version=__version__,

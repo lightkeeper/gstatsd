@@ -60,6 +60,16 @@ class StatsServiceTest(unittest.TestCase):
         self.svc._process(pkt, None)
         self.assertEquals(self.stats.counts, {'foo.bar': 1})
 
+    def test_gauge(self):
+        pkt = 'foo:123|g'
+        self.svc._process(pkt, None)
+        self.assertEquals(self.stats.gauges, {'foo': 123})
+        self.svc._process(pkt, None)
+        self.assertEquals(self.stats.gauges, {'foo': 123})
+        pkt = 'foo:888.7|g'
+        self.svc._process(pkt, None)
+        self.assertEquals(self.stats.gauges, {'foo': 888.7})
+
 
 def main():
     unittest.main()
